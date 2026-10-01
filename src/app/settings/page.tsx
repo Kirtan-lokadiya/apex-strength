@@ -1,18 +1,54 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Download, 
   RotateCcw, 
   Key, 
   Check,
-  Trash2
+  Trash2,
+  Bell,
+  Volume2
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
+import { 
+  getNotificationPermission, 
+  requestNotificationPermission, 
+  sendMobileNotification, 
+  isNotificationSupported 
+} from '@/lib/notifications/client';
 
 export function SettingsPage() {
   const { user, updateUserPreferences, resetToDemoSeed, clearAllData, exportUserData } = useWorkoutStore();
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+  const [notifSupported, setNotifSupported] = useState<boolean>(true);
+
+  useEffect(() => {
+    setNotifSupported(isNotificationSupported());
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    const res = await requestNotificationPermission();
+    setNotifPermission(res);
+    if (res === 'granted') {
+      await sendMobileNotification('🔔 ApexStrength Alerts Active', {
+        body: 'You will receive native alerts when your rest timer finishes and for scheduled workouts!',
+        tag: 'welcome',
+        vibrate: [300, 100, 300],
+      });
+      triggerSuccess();
+    }
+  };
+
+  const handleSendTestNotification = async () => {
+    await sendMobileNotification('🔔 Test Notification', {
+      body: 'Sound and vibration are working perfectly on your Android device!',
+      tag: 'test-alert',
+      vibrate: [300, 100, 300, 100, 300],
+    });
+  };
 
   const handleUnitChange = (unit: 'kg' | 'lb') => {
     updateUserPreferences({ unit });
@@ -151,7 +187,56 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {/* 3. API Keys & Free Cloud Configuration */}
+      {/* 3. Mobile Push Notifications (Android) */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xs transition-colors">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+            <h3 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider">
+              Android Push Notifications
+            </h3>
+          </div>
+          {notifPermission === 'granted' ? (
+            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+              <Check className="w-3 h-3" /> Enabled
+            </span>
+          ) : notifPermission === 'denied' ? (
+            <span className="text-[11px] font-bold text-rose-800 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-2.5 py-0.5 rounded-full border border-rose-200 dark:border-rose-800">
+              Blocked in Browser
+            </span>
+          ) : (
+            <span className="text-[11px] font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full">
+              Not Enabled Yet
+            </span>
+          )}
+        </div>
+
+        <p className="text-xs text-zinc-500 leading-relaxed">
+          Receive native vibration and sound alerts for rest intervals when your screen is locked or while in Spotify/YouTube. 100% free and unlimited on Android.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+          {notifPermission !== 'granted' ? (
+            <button
+              onClick={handleEnableNotifications}
+              className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              Enable Android Notifications
+            </button>
+          ) : (
+            <button
+              onClick={handleSendTestNotification}
+              className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+              Send Test Notification
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 4. API Keys & Free Cloud Configuration */}
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-3 shadow-xs transition-colors">
         <div className="flex items-center gap-2">
           <Key className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />

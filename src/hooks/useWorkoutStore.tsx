@@ -15,6 +15,7 @@ import { generateSeedData } from '@/lib/data/seedData';
 import { detectAndMarkMissedWorkouts } from '@/lib/engine/missedWorkoutDetector';
 import { estimateOneRepMax } from '@/lib/engine/oneRepMax';
 import { getExercises, saveCustomExercise } from '@/lib/firebase/firestore';
+import { sendMobileNotification } from '@/lib/notifications/client';
 
 interface WorkoutStoreContextType {
   user: UserProfile;
@@ -144,10 +145,13 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
       setRestTimerRemaining(prev => {
         if (prev <= 1) {
           setIsRestTimerActive(false);
-          // Play subtle beep vibration if supported
-          if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-            navigator.vibrate([200, 100, 200]);
-          }
+          // Trigger mobile vibration and background push notification
+          sendMobileNotification('⏱️ Rest Complete!', {
+            body: 'Rest interval finished. Get ready for your next working set!',
+            tag: 'rest-timer',
+            url: '/workout',
+            vibrate: [400, 150, 400],
+          });
           return 0;
         }
         return prev - 1;
