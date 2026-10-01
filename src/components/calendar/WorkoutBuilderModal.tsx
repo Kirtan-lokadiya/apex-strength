@@ -10,7 +10,8 @@ import {
   Dumbbell, 
   Check, 
   Sparkles,
-  Layers
+  Layers,
+  Loader2
 } from 'lucide-react';
 import { ScheduledWorkout, PlannedExercise, MuscleGroup, Exercise } from '@/lib/types';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
@@ -49,6 +50,43 @@ export function WorkoutBuilderModal({
   );
 
   const [showPicker, setShowPicker] = useState(false);
+  const [aiFocus, setAiFocus] = useState<string>('auto');
+  const [isGeneratingAI, setIsGeneratingAI] = useState<boolean>(false);
+
+  const handleGenerateWithAI = async (focusToUse = aiFocus) => {
+    setIsGeneratingAI(true);
+    try {
+      const res = await fetch('/api/ai/suggest-workout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          focus: focusToUse,
+          date: scheduledDate,
+          unit: user.preferences.unit,
+          durationMinutes: estimatedDuration,
+          availableExercises: allExercises.map(e => ({
+            id: e.id,
+            name: e.name,
+            primaryMuscle: e.primaryMuscle,
+            equipment: e.equipment,
+          })),
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setSessionName(json.data.programDayName);
+          setEstimatedDuration(json.data.estimatedDurationMinutes);
+          setPlannedExercises(json.data.plannedExercises);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to generate AI workout suggestion:', err);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -148,6 +186,62 @@ export function WorkoutBuilderModal({
 
         {/* Form Body (Scrollable) */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {/* AI Suggestion Bar */}
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-black text-zinc-900 dark:text-zinc-100">
+                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>AI Session Generator</span>
+              </div>
+              <button
+                type="button"
+                disabled={isGeneratingAI}
+                onClick={() => handleGenerateWithAI(aiFocus)}
+                className="px-3.5 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all active:scale-95 shadow-xs disabled:opacity-50"
+              >
+                {isGeneratingAI ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating Plan...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Suggest Workout with AI
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[11px]">
+              <span className="text-zinc-400 shrink-0 text-[10px] uppercase font-bold mr-0.5">Focus:</span>
+              {[
+                { id: 'auto', label: 'Auto (Readiness)' },
+                { id: 'push', label: 'Push (Chest/Tri)' },
+                { id: 'pull', label: 'Pull (Back/Bi)' },
+                { id: 'legs', label: 'Legs & Calves' },
+                { id: 'upper', label: 'Upper Body' },
+                { id: 'full', label: 'Full Body' },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => {
+                    setAiFocus(f.id);
+                    handleGenerateWithAI(f.id);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-colors shrink-0 ${
+                    aiFocus === f.id
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-zinc-200/70 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Workout Name */}
           <div>
             <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">

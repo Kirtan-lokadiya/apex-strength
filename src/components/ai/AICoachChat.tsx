@@ -6,24 +6,33 @@ import {
   Sparkles, 
   Bot, 
   User, 
-  Loader2 
+  Loader2,
+  Calendar,
+  CheckCircle2,
+  ArrowRight
 } from 'lucide-react';
+import Link from 'next/link';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
-import { AICoachMessage } from '@/lib/types';
+import { AICoachMessage, PlannedExercise } from '@/lib/types';
 
 export function AICoachChat() {
   const { 
     scheduledWorkouts, 
     completedSessions, 
     personalRecords,
-    user 
+    user,
+    rescheduleWorkout,
+    createScheduledWorkout,
+    deleteScheduledWorkout,
+    skipWorkout,
+    exercises
   } = useWorkoutStore();
 
   const [messages, setMessages] = useState<AICoachMessage[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hello ${user.displayName.split(' ')[0]}! I'm your ApexStrength AI Coach. I analyze your progressive overload, recovery intervals, and volume history.\n\nAsk me anything about today's workout, your progression, or recovery!`,
+      content: `Hello ${user.displayName.split(' ')[0]}! I'm your ApexStrength AI Coach with direct MCP schedule tools.\n\nYou can chat with me naturally to **move workouts** (*"Move my next workout to tomorrow"*), **schedule new sessions** (*"Schedule a 45-minute Arms workout for Saturday"*), or analyze your progressive overload!`,
       timestamp: Date.now(),
     },
   ]);
@@ -40,11 +49,11 @@ export function AICoachChat() {
   }, [messages, loading]);
 
   const quickPrompts = [
+    'Move my next workout to tomorrow',
+    'Schedule a 45-min Leg Day on Saturday at 10:00',
     'What should I train today?',
     'Why did my bench recommendation increase?',
     'I only have 30 minutes today.',
-    'I missed yesterday\'s Pull workout. What should I do?',
-    'How has my squat improved?',
   ];
 
   const handleSend = async (messageText?: string) => {
@@ -73,7 +82,7 @@ export function AICoachChat() {
           messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
           userContext: {
             todayWorkout,
-            weekWorkouts: scheduledWorkouts.slice(0, 7),
+            weekWorkouts: scheduledWorkouts.slice(0, 10),
             recentSessions: completedSessions.slice(0, 3),
             personalRecords: personalRecords.slice(0, 5),
           },
@@ -83,10 +92,72 @@ export function AICoachChat() {
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
+          let actionLabel: string | undefined = undefined;
+
+          // Dispatch MCP tool calls to the actual client store & database
+          if (json.toolCall && json.toolCall.name) {
+            const { name, args } = json.toolCall;
+
+            if (name === 'reschedule_workout') {
+              const target = scheduledWorkouts.find(w => w.id === args.workoutId) ||
+                             scheduledWorkouts.find(w => w.programDayName.toLowerCase().includes((args.workoutName || '').toLowerCase())) ||
+                             scheduledWorkouts[0];
+              if (target) {
+                rescheduleWorkout(target.id, args.newDate, args.newTime || '18:30', args.reason || 'Rescheduled via AI Coach');
+                actionLabel = `Rescheduled "${target.programDayName}" to ${args.newDate} at ${args.newTime || '18:30'}`;
+              }
+            } else if (name === 'create_workout') {
+              const mappedExercises: PlannedExercise[] = (args.plannedExercises || []).map((pe: any, idx: number) => {
+                const match = exercises.find(e => 
+                  e.name.toLowerCase() === pe.exerciseName.toLowerCase() || 
+                  e.name.toLowerCase().includes(pe.exerciseName.toLowerCase())
+                );
+                return {
+                  exerciseId: match?.id || `ai-${Date.now()}-${idx}`,
+                  exerciseName: pe.exerciseName,
+                  sets: Number(pe.sets) || 3,
+                  repMin: Number(pe.repMin) || 8,
+                  repMax: Number(pe.repMax) || 10,
+                  targetRir: Number(pe.targetRir) || 2,
+                  recommendedWeight: Number(pe.recommendedWeight) || (user.preferences.unit === 'kg' ? 50 : 115),
+                  unit: user.preferences.unit,
+                  progressionReason: 'Created via AI Coach tool',
+                };
+              });
+
+              createScheduledWorkout({
+                programDayName: args.programDayName || 'Custom Workout',
+                scheduledDate: args.scheduledDate,
+                scheduledTime: args.scheduledTime || '18:30',
+                estimatedDurationMinutes: Number(args.estimatedDurationMinutes) || 45,
+                muscleGroups: args.muscleGroups || ['Chest', 'Shoulders'],
+                plannedExercises: mappedExercises,
+                status: 'scheduled',
+              });
+              actionLabel = `Scheduled "${args.programDayName}" on ${args.scheduledDate} at ${args.scheduledTime || '18:30'}`;
+            } else if (name === 'delete_workout') {
+              const target = scheduledWorkouts.find(w => w.id === args.workoutId) ||
+                             scheduledWorkouts.find(w => w.programDayName.toLowerCase().includes((args.workoutName || '').toLowerCase()));
+              if (target) {
+                deleteScheduledWorkout(target.id);
+                actionLabel = `Deleted "${target.programDayName}" from calendar`;
+              }
+            } else if (name === 'skip_workout') {
+              const target = scheduledWorkouts.find(w => w.id === args.workoutId) ||
+                             scheduledWorkouts.find(w => w.programDayName.toLowerCase().includes((args.workoutName || '').toLowerCase()));
+              if (target) {
+                skipWorkout(target.id, args.reason || 'Skipped via AI Coach');
+                actionLabel = `Skipped "${target.programDayName}"`;
+              }
+            }
+          }
+
           const assistantMsg: AICoachMessage = {
             id: `reply-${Date.now()}`,
             role: 'assistant',
             content: json.reply,
+            toolCall: json.toolCall,
+            actionExecuted: actionLabel,
             timestamp: Date.now(),
           };
           setMessages(prev => [...prev, assistantMsg]);
@@ -120,10 +191,18 @@ export function AICoachChat() {
               Adaptive Strength Assistant
             </h3>
             <span className="text-[11px] text-zinc-500">
-              Deterministic Progressive Overload + GPT-4o Coaching
+              Deterministic Overload Engine + MCP Schedule Management Tools
             </span>
           </div>
         </div>
+
+        <Link
+          href="/calendar"
+          className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 transition-colors border border-zinc-200 dark:border-zinc-700"
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          Calendar
+        </Link>
       </div>
 
       {/* Messages Scroll Area */}
@@ -149,6 +228,23 @@ export function AICoachChat() {
               }`}
             >
               <div className="whitespace-pre-wrap">{msg.content}</div>
+
+              {/* Action Executed Interactive Confirmation Badge */}
+              {msg.actionExecuted && (
+                <div className="mt-3 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between gap-2 text-xs text-emerald-900 dark:text-emerald-200">
+                  <div className="flex items-center gap-2 font-bold min-w-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span className="truncate">{msg.actionExecuted}</span>
+                  </div>
+                  <Link
+                    href="/calendar"
+                    className="px-2 py-1 bg-emerald-600 text-white hover:bg-emerald-500 rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 shadow-xs"
+                  >
+                    View
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              )}
             </div>
 
             {msg.role === 'user' && (
@@ -162,7 +258,7 @@ export function AICoachChat() {
         {loading && (
           <div className="flex items-center gap-2 text-xs text-zinc-500 p-2">
             <Loader2 className="w-4 h-4 text-zinc-700 dark:text-zinc-300 animate-spin" />
-            <span>AI Coach is analyzing your training data...</span>
+            <span>AI Coach is executing schedule tools and analyzing training data...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -193,7 +289,7 @@ export function AICoachChat() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask your coach anything about lifting, recovery, or targets..."
+          placeholder="Ask coach to move workouts, schedule sessions, or analyze recovery..."
           className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-colors placeholder:text-zinc-400 shadow-xs"
         />
         <button

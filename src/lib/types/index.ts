@@ -285,4 +285,6 @@ export interface AICoachMessage {
   content: string;
   timestamp: number;
   proposedChanges?: ScheduleChangeItem[];
+  toolCall?: { name: string; args: any };
+  actionExecuted?: string;
 }
