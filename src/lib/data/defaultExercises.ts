@@ -117,7 +117,7 @@ export const DEFAULT_EXERCISES: Exercise[] = [
     updatedAt: 1700000000000,
   },
 
-  // LEGS - QUADS & GLUTES
+  // LEGS
   {
     id: 'barbell-back-squat',
     name: 'Barbell Back Squat',

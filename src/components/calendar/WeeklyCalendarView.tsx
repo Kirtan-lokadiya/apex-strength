@@ -10,9 +10,8 @@ import {
   Clock, 
   Plus, 
   Sparkles, 
-  MoreVertical,
-  Play,
-  RotateCw
+  Play, 
+  RotateCw 
 } from 'lucide-react';
 import { ScheduledWorkout, WorkoutStatus } from '@/lib/types';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
@@ -32,10 +31,8 @@ export function WeeklyCalendarView() {
   const [selectedWorkoutForReschedule, setSelectedWorkoutForReschedule] = useState<ScheduledWorkout | null>(null);
   const [adaptiveProposalWorkout, setAdaptiveProposalWorkout] = useState<ScheduledWorkout | null>(null);
 
-  // Compute 7 days for the current displayed week
   const today = new Date();
-  const currentDayOfWeek = today.getDay(); // 0 is Sunday
-  // Adjust based on user's preference (monday vs sunday start)
+  const currentDayOfWeek = today.getDay();
   const startDayOffset = user.preferences.weekStartsOn === 'monday' 
     ? (currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek)
     : -currentDayOfWeek;
@@ -51,7 +48,6 @@ export function WeeklyCalendarView() {
     const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d);
     const dayMonth = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d);
     
-    // Find workouts on this date
     const dayWorkouts = scheduledWorkouts.filter(w => w.scheduledDate === dateStr);
 
     return {
@@ -68,31 +64,31 @@ export function WeeklyCalendarView() {
     switch (status) {
       case 'completed':
         return (
-          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
             <CheckCircle2 className="w-3 h-3 stroke-[2.5]" /> Completed
           </span>
         );
       case 'missed':
         return (
-          <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-950/50 border border-amber-800/40 px-2 py-0.5 rounded-full">
+          <span className="flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">
             <AlertTriangle className="w-3 h-3 stroke-[2.5]" /> Missed
           </span>
         );
       case 'in_progress':
         return (
-          <span className="flex items-center gap-1 text-[11px] font-bold text-sky-400 bg-sky-950/50 border border-sky-800/40 px-2 py-0.5 rounded-full animate-pulse">
+          <span className="flex items-center gap-1 text-[11px] font-bold text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded-full animate-pulse">
             <Play className="w-3 h-3" /> Live
           </span>
         );
       case 'skipped':
         return (
-          <span className="text-[11px] font-medium text-slate-500 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-full">
+          <span className="text-[11px] font-medium text-zinc-400 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-2 py-0.5 rounded-full">
             Skipped
           </span>
         );
       default:
         return (
-          <span className="flex items-center gap-1 text-[11px] font-medium text-slate-300 bg-slate-800/70 border border-slate-700/60 px-2 py-0.5 rounded-full">
+          <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
             <Clock className="w-3 h-3" /> Scheduled
           </span>
         );
@@ -102,16 +98,16 @@ export function WeeklyCalendarView() {
   return (
     <div className="space-y-5 pb-24 max-w-3xl mx-auto animate-fade-in">
       {/* Week Navigation Header */}
-      <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-sky-400" />
-          <h2 className="font-extrabold text-slate-100 text-base sm:text-lg">
+      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-xs transition-colors">
+        <div className="flex items-center gap-2.5">
+          <CalendarIcon className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+          <h2 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-base sm:text-lg">
             {weekDays[0].dayMonth} – {weekDays[6].dayMonth}
           </h2>
           {currentWeekOffset !== 0 && (
             <button
               onClick={() => setCurrentWeekOffset(0)}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 hover:bg-slate-700 transition-colors"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             >
               Current Week
             </button>
@@ -121,14 +117,14 @@ export function WeeklyCalendarView() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentWeekOffset(prev => prev - 1)}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             title="Previous Week"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => setCurrentWeekOffset(prev => prev + 1)}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             title="Next Week"
           >
             <ChevronRight className="w-5 h-5" />
@@ -141,23 +137,23 @@ export function WeeklyCalendarView() {
         {weekDays.map((day) => (
           <div
             key={day.dateStr}
-            className={`rounded-2xl border transition-all duration-150 p-4 ${
+            className={`rounded-3xl border transition-all duration-150 p-4 ${
               day.isToday
-                ? 'bg-gradient-to-r from-sky-950/30 to-slate-900/90 border-sky-500/40 shadow-lg shadow-sky-500/5'
-                : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700/80'
+                ? 'bg-zinc-50/90 dark:bg-zinc-900/90 border-zinc-900 dark:border-zinc-100 shadow-sm'
+                : 'bg-white dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700'
             }`}
           >
             {/* Day Header */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800/60">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800/80">
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-black uppercase tracking-wider ${day.isToday ? 'text-sky-400' : 'text-slate-400'}`}>
+                <span className={`text-xs font-black uppercase tracking-wider ${day.isToday ? 'text-zinc-950 dark:text-white' : 'text-zinc-400'}`}>
                   {day.dayName}
                 </span>
-                <span className="text-xs text-slate-500 font-medium">
+                <span className="text-xs text-zinc-500 font-medium">
                   {day.dayMonth}
                 </span>
                 {day.isToday && (
-                  <span className="text-[10px] uppercase font-black px-1.5 py-0.2 rounded bg-sky-500 text-slate-950 font-mono">
+                  <span className="text-[10px] uppercase font-black px-1.5 py-0.2 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-mono">
                     TODAY
                   </span>
                 )}
@@ -171,7 +167,7 @@ export function WeeklyCalendarView() {
                     scheduledTime: '18:00',
                   });
                 }}
-                className="text-xs text-slate-500 hover:text-sky-400 p-1 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1"
+                className="text-xs text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1"
                 title="Add workout to this day"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -182,29 +178,29 @@ export function WeeklyCalendarView() {
             {/* Day Content */}
             {day.workouts.length === 0 ? (
               <div className="py-4 text-center">
-                <span className="text-xs font-semibold text-slate-600">Rest & Recovery Day</span>
+                <span className="text-xs font-semibold text-zinc-400">Rest & Recovery Day</span>
               </div>
             ) : (
               <div className="space-y-2.5 pt-2">
                 {day.workouts.map((workout) => (
                   <div
                     key={workout.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/70 gap-2"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200/80 dark:border-zinc-800 gap-2 shadow-xs"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-sm text-slate-100">
+                        <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
                           {workout.programDayName}
                         </span>
                         {getStatusBadge(workout.status)}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 mt-1">
                         <span>{workout.scheduledTime || '18:30'}</span>
                         <span>•</span>
                         <span>{workout.estimatedDurationMinutes} mins</span>
                         <span>•</span>
-                        <span className="text-sky-400 font-medium">
+                        <span className="text-zinc-700 dark:text-zinc-300 font-semibold">
                           {workout.muscleGroups.join(', ')}
                         </span>
                       </div>
@@ -215,7 +211,7 @@ export function WeeklyCalendarView() {
                       {workout.status === 'scheduled' && (
                         <button
                           onClick={() => startWorkout(workout)}
-                          className="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1 transition-all active:scale-95 shadow-md shadow-sky-500/20"
+                          className="px-3 py-1.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold text-xs rounded-xl flex items-center gap-1 transition-all active:scale-95 shadow-xs"
                         >
                           <Play className="w-3.5 h-3.5 fill-current" />
                           Start
@@ -225,7 +221,7 @@ export function WeeklyCalendarView() {
                       {workout.status === 'missed' && (
                         <button
                           onClick={() => setAdaptiveProposalWorkout(workout)}
-                          className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold rounded-xl flex items-center gap-1"
+                          className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60 text-xs font-bold rounded-xl flex items-center gap-1"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
                           Resolve
@@ -234,7 +230,7 @@ export function WeeklyCalendarView() {
 
                       <button
                         onClick={() => setSelectedWorkoutForReschedule(workout)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                        className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         title="Reschedule / Move"
                       >
                         <RotateCw className="w-3.5 h-3.5" />
@@ -247,7 +243,7 @@ export function WeeklyCalendarView() {
                               skipWorkout(workout.id);
                             }
                           }}
-                          className="text-[11px] text-slate-500 hover:text-rose-400 px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors"
+                          className="text-[11px] text-zinc-400 hover:text-rose-500 px-2 py-1 rounded-lg transition-colors"
                         >
                           Skip
                         </button>
@@ -261,7 +257,6 @@ export function WeeklyCalendarView() {
         ))}
       </div>
 
-      {/* Reschedule Modal */}
       {selectedWorkoutForReschedule && (
         <RescheduleModal
           isOpen={true}
@@ -270,7 +265,6 @@ export function WeeklyCalendarView() {
         />
       )}
 
-      {/* Adaptive Proposal Modal */}
       {adaptiveProposalWorkout && (
         <AdaptiveProposalModal
           isOpen={true}

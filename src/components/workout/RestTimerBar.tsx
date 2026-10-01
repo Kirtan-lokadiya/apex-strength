@@ -21,26 +21,26 @@ export function RestTimerBar() {
   const timeFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:w-96 z-40 bg-slate-900/95 border border-sky-500/40 rounded-2xl p-3 shadow-2xl backdrop-blur-md animate-slide-up">
+    <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:w-96 z-40 bg-white/95 dark:bg-zinc-900/95 border border-zinc-300 dark:border-zinc-700 rounded-3xl p-3.5 shadow-xl backdrop-blur-md animate-slide-up transition-colors">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center shadow-xs">
             <Timer className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+            <span className="text-[10px] uppercase font-extrabold text-zinc-500 tracking-wider block">
               Rest Timer
             </span>
-            <span className="text-xl font-black text-slate-100 font-mono tracking-tight">
+            <span className="text-xl font-black text-zinc-900 dark:text-zinc-100 font-mono tracking-tight">
               {timeFormatted}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => addRestTimerSeconds(30)}
-            className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors active:scale-95"
+            className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors active:scale-95 border border-zinc-200 dark:border-zinc-700"
             title="Add 30 seconds"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -49,7 +49,7 @@ export function RestTimerBar() {
 
           <button
             onClick={() => isRestTimerActive ? pauseRestTimer() : startRestTimer(restTimerRemaining)}
-            className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors active:scale-95"
+            className="p-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl transition-colors active:scale-95 border border-zinc-200 dark:border-zinc-700"
             title={isRestTimerActive ? 'Pause' : 'Resume'}
           >
             {isRestTimerActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -57,7 +57,7 @@ export function RestTimerBar() {
 
           <button
             onClick={resetRestTimer}
-            className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-colors active:scale-95"
+            className="p-2 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
             title="Skip Rest"
           >
             <SkipForward className="w-4 h-4" />

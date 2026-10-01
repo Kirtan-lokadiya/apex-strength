@@ -21,13 +21,12 @@ interface MissedWorkoutBannerProps {
 }
 
 export function MissedWorkoutBanner({ missedWorkout }: MissedWorkoutBannerProps) {
-  const { skipWorkout, startWorkout, createScheduledWorkout } = useWorkoutStore();
+  const { skipWorkout, startWorkout } = useWorkoutStore();
   const [showRescheduleModal, setShowRescheduleModal] = useState<boolean>(false);
   const [showAIProposalModal, setShowAIProposalModal] = useState<boolean>(false);
 
   const handleDoShortened = () => {
     const { shortenedWorkout } = createShortenedWorkout(missedWorkout);
-    // Start shortened session immediately
     startWorkout(shortenedWorkout);
   };
 
@@ -38,97 +37,96 @@ export function MissedWorkoutBanner({ missedWorkout }: MissedWorkoutBannerProps)
   };
 
   return (
-    <div className="bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-slate-900 border border-amber-600/40 rounded-2xl p-4 shadow-xl space-y-3 animate-fade-in">
+    <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800/60 rounded-3xl p-5 shadow-xs space-y-3.5 animate-fade-in transition-colors">
       {/* Alert Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-4 h-4 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                 Missed Workout
               </span>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                 {missedWorkout.scheduledDate} • {missedWorkout.scheduledTime}
               </span>
             </div>
-            <h4 className="font-extrabold text-slate-100 text-sm sm:text-base mt-0.5">
+            <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-base mt-0.5">
               {missedWorkout.programDayName}
             </h4>
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-slate-300 leading-relaxed">
+      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed font-medium">
         This scheduled workout passed without being completed. What would you like to do?
       </p>
 
       {/* 4 Interactive Resolution Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
         {/* Option 1: AI Reorganize Week */}
         <button
           onClick={() => setShowAIProposalModal(true)}
-          className="flex items-center justify-between p-2.5 rounded-xl bg-sky-950/40 hover:bg-sky-900/50 border border-sky-800/50 text-left transition-all group"
+          className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800 text-left transition-all shadow-xs group"
         >
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-sky-400 shrink-0 group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-zinc-700 dark:text-zinc-300 shrink-0 group-hover:scale-110 transition-transform" />
             <div>
-              <span className="text-xs font-bold text-sky-300 block">AI Reorganize Week</span>
-              <span className="text-[10px] text-slate-400 block">Optimizes muscle recovery</span>
+              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 block">AI Reorganize Week</span>
+              <span className="text-[10px] text-zinc-500 block">Optimizes muscle recovery</span>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-sky-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </button>
 
         {/* Option 2: Do Shortened Express Workout */}
         <button
           onClick={handleDoShortened}
-          className="flex items-center justify-between p-2.5 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 border border-amber-700/50 text-left transition-all group"
+          className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800 text-left transition-all shadow-xs group"
         >
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-2.5">
+            <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
             <div>
-              <span className="text-xs font-bold text-amber-300 block">Do 35-min Express</span>
-              <span className="text-[10px] text-slate-400 block">Main compounds only</span>
+              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 block">Do 35-min Express</span>
+              <span className="text-[10px] text-zinc-500 block">Main compounds only</span>
             </div>
           </div>
-          <ArrowRight className="w-4 h-4 text-amber-400" />
+          <ArrowRight className="w-4 h-4 text-zinc-400" />
         </button>
 
         {/* Option 3: Reschedule to specific day */}
         <button
           onClick={() => setShowRescheduleModal(true)}
-          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-left transition-all"
+          className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800 text-left transition-all shadow-xs"
         >
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-300 shrink-0" />
+          <div className="flex items-center gap-2.5">
+            <Calendar className="w-4 h-4 text-zinc-600 dark:text-zinc-400 shrink-0" />
             <div>
-              <span className="text-xs font-bold text-slate-200 block">Reschedule Workout</span>
-              <span className="text-[10px] text-slate-400 block">Pick a new day or time</span>
+              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 block">Reschedule Workout</span>
+              <span className="text-[10px] text-zinc-500 block">Pick a new day or time</span>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </button>
 
         {/* Option 4: Skip Workout */}
         <button
           onClick={handleSkip}
-          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/60 border border-slate-800 text-left transition-all"
+          className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-800 text-left transition-all shadow-xs"
         >
-          <div className="flex items-center gap-2">
-            <FastForward className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-2.5">
+            <FastForward className="w-4 h-4 text-zinc-400 shrink-0" />
             <div>
-              <span className="text-xs font-bold text-slate-300 block">Skip & Continue</span>
-              <span className="text-[10px] text-slate-500 block">Proceed with normal split</span>
+              <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block">Skip & Continue</span>
+              <span className="text-[10px] text-zinc-400 block">Proceed with normal split</span>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
+          <ChevronRight className="w-4 h-4 text-zinc-400" />
         </button>
       </div>
 
-      {/* Reschedule Modal */}
       {showRescheduleModal && (
         <RescheduleModal
           isOpen={true}
@@ -137,7 +135,6 @@ export function MissedWorkoutBanner({ missedWorkout }: MissedWorkoutBannerProps)
         />
       )}
 
-      {/* AI Proposal Modal */}
       {showAIProposalModal && (
         <AdaptiveProposalModal
           isOpen={true}

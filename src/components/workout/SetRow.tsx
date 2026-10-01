@@ -24,14 +24,14 @@ export function SetRow({
   const getBadgeColor = (type: SetType) => {
     switch (type) {
       case 'warmup':
-        return 'text-amber-400 bg-amber-950/40 border-amber-800/40';
+        return 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800/60';
       case 'drop':
-        return 'text-purple-400 bg-purple-950/40 border-purple-800/40';
+        return 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/60 border-purple-300 dark:border-purple-800/60';
       case 'failure':
       case 'amrap':
-        return 'text-rose-400 bg-rose-950/40 border-rose-800/40';
+        return 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800/60';
       default:
-        return 'text-slate-300 bg-slate-800 border-slate-700';
+        return 'text-zinc-700 bg-zinc-100 dark:text-zinc-300 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700';
     }
   };
 
@@ -46,8 +46,8 @@ export function SetRow({
     <div
       className={`grid grid-cols-12 gap-1.5 sm:gap-2 items-center py-2 px-2.5 rounded-xl transition-all duration-150 border ${
         set.completed
-          ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-100'
-          : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
+          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/50 text-zinc-900 dark:text-zinc-100'
+          : 'bg-white dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
       }`}
     >
       {/* Set Number & Type Pill */}
@@ -65,7 +65,7 @@ export function SetRow({
       </div>
 
       {/* Previous Performance Reference */}
-      <div className="col-span-3 text-[11px] text-slate-400 truncate font-mono">
+      <div className="col-span-3 text-[11px] text-zinc-500 font-mono truncate">
         {set.previousPerformance || '—'}
       </div>
 
@@ -80,8 +80,8 @@ export function SetRow({
           onChange={(e) => onUpdate({ weight: parseFloat(e.target.value) || 0 })}
           className={`w-full text-center font-bold text-sm py-1.5 rounded-lg border focus:outline-none transition-colors ${
             set.completed
-              ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200'
-              : 'bg-slate-950 border-slate-700/80 text-slate-100 focus:border-sky-500'
+              ? 'bg-emerald-100/60 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+              : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100'
           }`}
         />
       </div>
@@ -97,8 +97,8 @@ export function SetRow({
           onChange={(e) => onUpdate({ reps: parseInt(e.target.value, 10) || 0 })}
           className={`w-full text-center font-bold text-sm py-1.5 rounded-lg border focus:outline-none transition-colors ${
             set.completed
-              ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200'
-              : 'bg-slate-950 border-slate-700/80 text-slate-100 focus:border-sky-500'
+              ? 'bg-emerald-100/60 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+              : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:border-zinc-900 dark:focus:border-zinc-100'
           }`}
         />
       </div>
@@ -114,7 +114,7 @@ export function SetRow({
           title="Reps in Reserve (RIR)"
           inputMode="numeric"
           onChange={(e) => onUpdate({ rir: parseInt(e.target.value, 10) || 0 })}
-          className="w-full text-center text-xs py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 focus:border-sky-500"
+          className="w-full text-center text-xs py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 focus:border-zinc-900 dark:focus:border-zinc-100"
         />
       </div>
 
@@ -125,8 +125,8 @@ export function SetRow({
           onClick={onToggleDone}
           className={`w-8 h-8 rounded-xl flex items-center justify-center font-black transition-all active:scale-90 ${
             set.completed
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
-              : 'bg-slate-800 text-slate-500 hover:text-slate-300 hover:bg-slate-700 border border-slate-700'
+              ? 'bg-emerald-500 text-white shadow-sm'
+              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
           }`}
         >
           <Check className={`w-4 h-4 stroke-[3] ${set.completed ? 'scale-110' : ''}`} />
@@ -135,7 +135,7 @@ export function SetRow({
         <button
           type="button"
           onClick={onDelete}
-          className="p-1 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+          className="p-1 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           title="Delete Set"
         >
           <Trash2 className="w-3.5 h-3.5" />

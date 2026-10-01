@@ -30,7 +30,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 md:hidden pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 md:hidden pb-safe transition-colors">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -42,14 +42,14 @@ export function BottomNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-all duration-200 relative ${
                 isActive 
-                  ? 'text-sky-400 font-medium' 
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'text-zinc-950 dark:text-white font-bold' 
+                  : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 font-medium'
               }`}
             >
               <div className="relative">
-                <Icon className={`w-6 h-6 ${isActive ? 'scale-110' : ''}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'scale-110 stroke-[2.5]' : ''}`} />
                 {item.isActiveWorkout && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
                 )}
                 {item.isActiveWorkout && (
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full" />
@@ -57,7 +57,7 @@ export function BottomNav() {
               </div>
               <span className="text-[11px] tracking-tight mt-1">{item.label}</span>
               {isActive && (
-                <span className="absolute bottom-0 w-8 h-0.5 bg-sky-400 rounded-full" />
+                <span className="absolute bottom-0 w-8 h-0.5 bg-zinc-900 dark:bg-zinc-100 rounded-full" />
               )}
             </Link>
           );

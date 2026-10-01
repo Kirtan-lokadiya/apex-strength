@@ -10,7 +10,7 @@ export const DEMO_USER: UserProfile = {
   email: 'lifter@apexstrength.app',
   displayName: 'Alex Mercer',
   photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-  createdAt: Date.now() - 1000 * 60 * 60 * 24 * 60, // 60 days ago
+  createdAt: Date.now() - 1000 * 60 * 60 * 24 * 60,
   updatedAt: Date.now(),
   onboardingCompleted: true,
   activeProgramId: 'push-pull-legs-classic',
@@ -32,7 +32,6 @@ export const DEMO_USER: UserProfile = {
   },
 };
 
-// Generate realistic dates around current week
 export function generateSeedData(): {
   user: UserProfile;
   scheduledWorkouts: ScheduledWorkout[];
@@ -41,7 +40,6 @@ export function generateSeedData(): {
 } {
   const now = new Date();
   
-  // Date helpers
   const getDateStr = (offsetDays: number): string => {
     const d = new Date(now);
     d.setDate(d.getDate() + offsetDays);
@@ -57,7 +55,6 @@ export function generateSeedData(): {
   const inThreeDaysStr = getDateStr(3);
   const inFiveDaysStr = getDateStr(5);
 
-  // 1. SCHEDULED WORKOUTS
   const scheduledWorkouts: ScheduledWorkout[] = [
     // Past completed Push workout
     {
@@ -417,7 +414,6 @@ export function generateSeedData(): {
     },
   ];
 
-  // 2. ACTUAL RECORDED SESSIONS (HISTORY)
   const completedSessions: WorkoutSession[] = [
     {
       id: 'sess-push-prev',
@@ -493,7 +489,6 @@ export function generateSeedData(): {
     },
   ];
 
-  // 3. PERSONAL RECORDS
   const personalRecords: PersonalRecord[] = [
     {
       id: 'pr-bp-1rm',
