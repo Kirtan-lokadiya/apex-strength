@@ -10,7 +10,7 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
   useEffect(() => {
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      window.addEventListener('load', () => {
+      const registerSW = () => {
         navigator.serviceWorker
           .register('/sw.js')
           .then((reg) => {
@@ -19,7 +19,14 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
           .catch((err) => {
             console.warn('ApexStrength ServiceWorker registration failed:', err);
           });
-      });
+      };
+
+      if (document.readyState === 'complete') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+        return () => window.removeEventListener('load', registerSW);
+      }
     }
   }, []);
 
