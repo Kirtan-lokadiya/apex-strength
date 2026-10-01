@@ -5,12 +5,13 @@ import {
   Download, 
   RotateCcw, 
   Key, 
-  Check 
+  Check,
+  Trash2
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 
 export function SettingsPage() {
-  const { user, updateUserPreferences, resetToDemoSeed, exportUserData } = useWorkoutStore();
+  const { user, updateUserPreferences, resetToDemoSeed, clearAllData, exportUserData } = useWorkoutStore();
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleUnitChange = (unit: 'kg' | 'lb') => {
@@ -203,19 +204,33 @@ export function SettingsPage() {
           Demo & Reset Controls
         </h3>
         <p className="text-xs text-zinc-500">
-          Reset local database to the curated demonstration state featuring bench/squat PR progressions and the missed Pull session banner.
+          Reset local database to the curated demonstration state or wipe all data clean for testing from a blank slate.
         </p>
-        <button
-          onClick={() => {
-            if (confirm('Are you sure you want to reset all data to the initial demonstration seed?')) {
-              resetToDemoSeed();
-            }
-          }}
-          className="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset to Demo Seed Data
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to reset all data to the initial demonstration seed?')) {
+                resetToDemoSeed();
+              }
+            }}
+            className="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset to Demo Seed Data
+          </button>
+
+          <button
+            onClick={() => {
+              if (confirm('Permanently wipe ALL workouts, history logs, and PRs to start fresh from a blank slate?')) {
+                clearAllData();
+              }
+            }}
+            className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-950 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear All Workout Data
+          </button>
+        </div>
       </div>
     </div>
   );

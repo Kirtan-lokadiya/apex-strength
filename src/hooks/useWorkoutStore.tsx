@@ -44,6 +44,13 @@ interface WorkoutStoreContextType {
   skipWorkout: (workoutId: string, reason?: string) => void;
   applyScheduleChanges: (changes: ScheduleChangeItem[]) => void;
   createScheduledWorkout: (workout: Partial<ScheduledWorkout>) => void;
+  updateScheduledWorkout: (workout: ScheduledWorkout) => void;
+  deleteScheduledWorkout: (workoutId: string) => void;
+  
+  // History & Exercise Deletion
+  deleteCompletedSession: (sessionId: string) => void;
+  deleteCustomExercise: (exerciseId: string) => void;
+  clearAllData: () => void;
   
   // Custom Exercises & Settings
   addCustomExercise: (exercise: Exercise) => Promise<void>;
@@ -478,6 +485,39 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
     setScheduledWorkouts(prev => [...prev, newWorkout]);
   }, [user.id]);
 
+  const updateScheduledWorkout = useCallback((workout: ScheduledWorkout) => {
+    setScheduledWorkouts(prev => prev.map(w => w.id === workout.id ? { ...workout, updatedAt: Date.now() } : w));
+  }, []);
+
+  const deleteScheduledWorkout = useCallback((workoutId: string) => {
+    setScheduledWorkouts(prev => prev.filter(w => w.id !== workoutId));
+    setActiveSession(prev => prev?.scheduledWorkoutId === workoutId ? null : prev);
+  }, []);
+
+  const deleteCompletedSession = useCallback((sessionId: string) => {
+    setCompletedSessions(prev => prev.filter(s => s.id !== sessionId));
+  }, []);
+
+  const deleteCustomExercise = useCallback((exerciseId: string) => {
+    setExercises(prev => prev.filter(e => e.id !== exerciseId));
+    try {
+      const raw = localStorage.getItem('apex_strength_custom_exercises');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        localStorage.setItem('apex_strength_custom_exercises', JSON.stringify(parsed.filter((e: any) => e.id !== exerciseId)));
+      }
+    } catch {}
+  }, []);
+
+  const clearAllData = useCallback(() => {
+    setScheduledWorkouts([]);
+    setCompletedSessions([]);
+    setPersonalRecords([]);
+    setActiveSession(null);
+    resetRestTimer();
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
+
   const addCustomExercise = async (exercise: Exercise) => {
     setExercises(prev => [...prev, exercise]);
     await saveCustomExercise(exercise);
@@ -567,6 +607,11 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
         skipWorkout,
         applyScheduleChanges,
         createScheduledWorkout,
+        updateScheduledWorkout,
+        deleteScheduledWorkout,
+        deleteCompletedSession,
+        deleteCustomExercise,
+        clearAllData,
         addCustomExercise,
         updateUserPreferences,
         resetToDemoSeed,

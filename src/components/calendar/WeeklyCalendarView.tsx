@@ -11,12 +11,15 @@ import {
   Plus, 
   Sparkles, 
   Play, 
-  RotateCw 
+  RotateCw,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import { ScheduledWorkout, WorkoutStatus } from '@/lib/types';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 import { RescheduleModal } from './RescheduleModal';
 import { AdaptiveProposalModal } from './AdaptiveProposalModal';
+import { WorkoutBuilderModal } from './WorkoutBuilderModal';
 
 export function WeeklyCalendarView() {
   const { 
@@ -24,12 +27,16 @@ export function WeeklyCalendarView() {
     startWorkout, 
     skipWorkout,
     createScheduledWorkout,
+    deleteScheduledWorkout,
     user
   } = useWorkoutStore();
 
   const [currentWeekOffset, setCurrentWeekOffset] = useState<number>(0);
   const [selectedWorkoutForReschedule, setSelectedWorkoutForReschedule] = useState<ScheduledWorkout | null>(null);
   const [adaptiveProposalWorkout, setAdaptiveProposalWorkout] = useState<ScheduledWorkout | null>(null);
+  const [builderModalOpen, setBuilderModalOpen] = useState<boolean>(false);
+  const [builderInitialDate, setBuilderInitialDate] = useState<string | undefined>(undefined);
+  const [selectedWorkoutForBuilder, setSelectedWorkoutForBuilder] = useState<ScheduledWorkout | null>(null);
 
   const today = new Date();
   const currentDayOfWeek = today.getDay();
@@ -161,11 +168,9 @@ export function WeeklyCalendarView() {
 
               <button
                 onClick={() => {
-                  createScheduledWorkout({
-                    scheduledDate: day.dateStr,
-                    programDayName: 'Custom Session',
-                    scheduledTime: '18:00',
-                  });
+                  setBuilderInitialDate(day.dateStr);
+                  setSelectedWorkoutForBuilder(null);
+                  setBuilderModalOpen(true);
                 }}
                 className="text-xs text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1"
                 title="Add workout to this day"
@@ -229,11 +234,34 @@ export function WeeklyCalendarView() {
                       )}
 
                       <button
+                        onClick={() => {
+                          setSelectedWorkoutForBuilder(workout);
+                          setBuilderModalOpen(true);
+                        }}
+                        className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        title="Edit Workout / Exercises"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
                         onClick={() => setSelectedWorkoutForReschedule(workout)}
                         className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         title="Reschedule / Move"
                       >
                         <RotateCw className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete "${workout.programDayName}" from your schedule?`)) {
+                            deleteScheduledWorkout(workout.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Delete workout"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
 
                       {workout.status === 'scheduled' && (
@@ -270,6 +298,15 @@ export function WeeklyCalendarView() {
           isOpen={true}
           onClose={() => setAdaptiveProposalWorkout(null)}
           missedWorkout={adaptiveProposalWorkout}
+        />
+      )}
+
+      {builderModalOpen && (
+        <WorkoutBuilderModal
+          isOpen={true}
+          onClose={() => setBuilderModalOpen(false)}
+          initialDate={builderInitialDate}
+          existingWorkout={selectedWorkoutForBuilder}
         />
       )}
     </div>

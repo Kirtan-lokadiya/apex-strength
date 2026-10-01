@@ -10,7 +10,8 @@ import {
   Calendar as CalendarIcon,
   ChevronRight,
   BatteryCharging,
-  Layers
+  Layers,
+  Trash2
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 import { MissedWorkoutBanner } from '@/components/calendar/MissedWorkoutBanner';
@@ -20,6 +21,7 @@ export function TodayDashboard() {
   const { 
     scheduledWorkouts, 
     startWorkout, 
+    deleteScheduledWorkout,
     user, 
     activeSession,
     exercises 
@@ -136,13 +138,29 @@ export function TodayDashboard() {
               </span>
             </div>
 
-            <button
-              onClick={() => setShowReadiness(!showReadiness)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors"
-            >
-              <BatteryCharging className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="hidden sm:inline">Daily Check-in</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowReadiness(!showReadiness)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors"
+              >
+                <BatteryCharging className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="hidden sm:inline">Daily Check-in</span>
+              </button>
+
+              {todayWorkout && (
+                <button
+                  onClick={() => {
+                    if (confirm(`Delete today's workout "${todayWorkout.programDayName}"?`)) {
+                      deleteScheduledWorkout(todayWorkout.id);
+                    }
+                  }}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-800/40 transition-colors"
+                  title="Delete today's workout"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Readiness Dropdown Panel */}

@@ -6,14 +6,15 @@ import {
   Plus, 
   X, 
   Check, 
-  Loader2 
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 import { Exercise, MuscleGroup, EquipmentType } from '@/lib/types';
 import { uploadImageToImgBB } from '@/lib/imgbb/client';
 
 export default function ExercisesPage() {
-  const { exercises, addCustomExercise } = useWorkoutStore();
+  const { exercises, addCustomExercise, deleteCustomExercise } = useWorkoutStore();
   const [search, setSearch] = useState<string>('');
   const [selectedMuscle, setSelectedMuscle] = useState<string>('All');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -154,9 +155,23 @@ export default function ExercisesPage() {
                     {exercise.name}
                   </h4>
                   {exercise.isCustom && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
-                      Custom
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                        Custom
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete custom exercise "${exercise.name}"?`)) {
+                            deleteCustomExercise(exercise.id);
+                          }
+                        }}
+                        className="p-1 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Delete custom exercise"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-1">
@@ -215,12 +230,29 @@ export default function ExercisesPage() {
               </div>
             )}
 
-            <button
-              onClick={() => setSelectedExercise(null)}
-              className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold rounded-2xl text-xs transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedExercise.isCustom && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm(`Delete custom exercise "${selectedExercise.name}"?`)) {
+                      deleteCustomExercise(selectedExercise.id);
+                      setSelectedExercise(null);
+                    }
+                  }}
+                  className="px-4 py-3 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedExercise(null)}
+                className="flex-1 py-3 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold rounded-2xl text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

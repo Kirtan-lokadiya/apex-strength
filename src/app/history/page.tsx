@@ -7,12 +7,13 @@ import {
   ChevronDown, 
   ChevronUp, 
   Trophy, 
-  CheckCircle2 
+  CheckCircle2,
+  Trash2
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 
 export default function HistoryPage() {
-  const { completedSessions, user } = useWorkoutStore();
+  const { completedSessions, deleteCompletedSession, user } = useWorkoutStore();
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
@@ -82,8 +83,22 @@ export default function HistoryPage() {
                     </div>
                   </div>
 
-                  <div className="p-2 text-zinc-400">
-                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete workout record "${session.name}" from ${dateStr}? This cannot be undone.`)) {
+                          deleteCompletedSession(session.id);
+                        }
+                      }}
+                      className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors"
+                      title="Delete workout from history"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="p-2 text-zinc-400">
+                      {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
                   </div>
                 </div>
 
