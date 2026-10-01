@@ -71,6 +71,12 @@ export interface UserPreferences {
   autoDetectMissedWorkouts: boolean;
   barbellWeightKg: number;
   barbellWeightLb: number;
+  notifyExerciseComplete?: boolean;
+  notifyRestTimerComplete?: boolean;
+  notifyRestTimerWarning?: boolean;
+  notifyHydration?: boolean;
+  hydrationIntervalMinutes?: number;
+  notifyPR?: boolean;
 }
 
 export interface UserProfile {

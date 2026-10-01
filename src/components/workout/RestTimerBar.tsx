@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
-import { Timer, Plus, SkipForward, Play, Pause } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Timer, Plus, SkipForward, Play, Pause, Bell } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
+import { getNotificationPermission, requestNotificationPermission, sendMobileNotification } from '@/lib/notifications/client';
 
 export function RestTimerBar() {
   const { 
@@ -13,6 +14,25 @@ export function RestTimerBar() {
     resetRestTimer, 
     addRestTimerSeconds 
   } = useWorkoutStore();
+
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('granted');
+
+  useEffect(() => {
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const handleEnableAlerts = async () => {
+    const res = await requestNotificationPermission();
+    setNotifPermission(res);
+    if (res === 'granted') {
+      sendMobileNotification('🔔 Workout Alerts Active', {
+        body: 'Sound and vibration cues are ready for your workout sets!',
+        tag: 'ready',
+        vibrate: [200, 100, 200],
+        soundType: 'chime',
+      });
+    }
+  };
 
   if (restTimerRemaining <= 0) return null;
 
@@ -64,6 +84,19 @@ export function RestTimerBar() {
           </button>
         </div>
       </div>
+
+      {notifPermission === 'default' && (
+        <div className="mt-2.5 pt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <span className="text-[11px] text-zinc-500">Enable sound & vibration alerts</span>
+          <button
+            onClick={handleEnableAlerts}
+            className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors"
+          >
+            <Bell className="w-3 h-3" />
+            Enable
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   UserProfile, 
   Exercise, 
@@ -143,22 +143,69 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
     if (!isRestTimerActive || restTimerRemaining <= 0) return;
     const timer = setInterval(() => {
       setRestTimerRemaining(prev => {
+        // 10-second ready-up warning
+        if (prev === 11 && (user.preferences.notifyRestTimerWarning ?? true)) {
+          sendMobileNotification('⚠️ 10 Seconds Remaining', {
+            body: 'Chalk up and approach the bar for your next set!',
+            tag: 'rest-warning',
+            url: '/workout',
+            vibrate: [150, 80, 150],
+            soundType: 'tick',
+          });
+        }
+
         if (prev <= 1) {
           setIsRestTimerActive(false);
           // Trigger mobile vibration and background push notification
-          sendMobileNotification('⏱️ Rest Complete!', {
-            body: 'Rest interval finished. Get ready for your next working set!',
-            tag: 'rest-timer',
-            url: '/workout',
-            vibrate: [400, 150, 400],
-          });
+          if (user.preferences.notifyRestTimerComplete ?? true) {
+            sendMobileNotification('⏱️ Rest Complete!', {
+              body: 'Rest interval finished. Get ready for your next working set!',
+              tag: 'rest-timer',
+              url: '/workout',
+              vibrate: [400, 150, 400],
+              soundType: 'chime',
+            });
+          }
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isRestTimerActive, restTimerRemaining]);
+  }, [isRestTimerActive, restTimerRemaining, user.preferences.notifyRestTimerWarning, user.preferences.notifyRestTimerComplete]);
+
+  // Active Workout Hydration Reminder Loop
+  const lastHydrationIntervalRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!activeSession) {
+      lastHydrationIntervalRef.current = 0;
+      return;
+    }
+
+    const intervalMinutes = user.preferences.hydrationIntervalMinutes || 20;
+    const isHydrationEnabled = user.preferences.notifyHydration ?? true;
+    if (!isHydrationEnabled) return;
+
+    const checkHydration = () => {
+      const elapsedMinutes = Math.floor((Date.now() - activeSession.startedAt) / (1000 * 60));
+      const intervalBucket = Math.floor(elapsedMinutes / intervalMinutes);
+
+      if (intervalBucket > 0 && intervalBucket > lastHydrationIntervalRef.current) {
+        lastHydrationIntervalRef.current = intervalBucket;
+        sendMobileNotification('💧 Hydration Check', {
+          body: `Take a sip of water! You've been training for ${elapsedMinutes} minutes. Stay hydrated for maximum strength!`,
+          tag: 'hydration-reminder',
+          url: '/workout',
+          vibrate: [200, 150, 200],
+          soundType: 'water',
+        });
+      }
+    };
+
+    const timer = setInterval(checkHydration, 15 * 1000); // Check every 15s
+    return () => clearInterval(timer);
+  }, [activeSession, user.preferences.notifyHydration, user.preferences.hydrationIntervalMinutes]);
 
   const startRestTimer = (seconds: number) => {
     setRestTimerRemaining(seconds);
@@ -286,22 +333,92 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
       if (!prev) return null;
       let shouldTriggerTimer = false;
       let restSeconds = 90;
+      let exerciseFinishedNotice: { name: string; setsCount: number } | null = null;
+      let prAchievedNotice: { name: string; weight: number; reps: number; est1RM: number } | null = null;
 
       const updatedExercises = prev.exercises.map(ex => {
         if (ex.exerciseId !== exerciseId) return ex;
         restSeconds = ex.restTimerSeconds || 90;
+        const wasAllCompletedBefore = ex.sets.length > 0 && ex.sets.every(s => s.completed);
+
         const updatedSets = ex.sets.map((s, idx) => {
           if (idx !== setIndex) return s;
           const nextCompleted = !s.completed;
-          if (nextCompleted) shouldTriggerTimer = true;
+          if (nextCompleted) {
+            shouldTriggerTimer = true;
+
+            // Check if this set is a new PR
+            if (s.weight > 0 && s.reps > 0) {
+              const est1RM = estimateOneRepMax(s.weight, s.reps);
+              const existingPR = personalRecords.find(p => p.exerciseId === exerciseId && p.type === '1rm');
+              if (est1RM > 0 && (!existingPR || est1RM > existingPR.value + 0.5)) {
+                prAchievedNotice = {
+                  name: ex.exerciseName,
+                  weight: s.weight,
+                  reps: s.reps,
+                  est1RM,
+                };
+              }
+            }
+          }
           return {
             ...s,
             completed: nextCompleted,
             completedAt: nextCompleted ? Date.now() : undefined,
           };
         });
+
+        const isAllCompletedNow = updatedSets.length > 0 && updatedSets.every(s => s.completed);
+        if (!wasAllCompletedBefore && isAllCompletedNow) {
+          exerciseFinishedNotice = {
+            name: ex.exerciseName,
+            setsCount: updatedSets.length,
+          };
+        }
+
         return { ...ex, sets: updatedSets };
       });
+
+      // 1. Personal Record Notification
+      if (prAchievedNotice && (user.preferences.notifyPR ?? true)) {
+        const pr = prAchievedNotice as { name: string; weight: number; reps: number; est1RM: number };
+        sendMobileNotification('🏆 NEW PERSONAL RECORD!', {
+          body: `${pr.name}: ${pr.weight} ${user.preferences.unit} × ${pr.reps} reps (Est. 1RM: ${pr.est1RM} ${user.preferences.unit})!`,
+          tag: 'pr-trophy',
+          url: '/workout',
+          vibrate: [300, 100, 300, 100, 500],
+          soundType: 'fanfare',
+        });
+      }
+
+      // 2. Exercise Completion & Next Exercise Preview Notification
+      if (exerciseFinishedNotice && (user.preferences.notifyExerciseComplete ?? true)) {
+        const currentIdx = updatedExercises.findIndex(e => e.exerciseId === exerciseId);
+        let nextEx = updatedExercises.slice(currentIdx + 1).find(e => e.sets.some(s => !s.completed));
+        if (!nextEx) {
+          nextEx = updatedExercises.slice(0, currentIdx).find(e => e.sets.some(s => !s.completed));
+        }
+
+        if (nextEx) {
+          const nextSetsCount = nextEx.sets.filter(s => !s.completed).length;
+          sendMobileNotification(`✅ ${(exerciseFinishedNotice as { name: string; setsCount: number }).name} Completed!`, {
+            body: `All sets done! Next: ${nextEx.exerciseName} (${nextSetsCount} sets remaining).`,
+            tag: 'exercise-complete',
+            url: '/workout',
+            vibrate: [250, 100, 250],
+            soundType: 'chime',
+          });
+        } else {
+          // All exercises in the entire workout session are completed!
+          sendMobileNotification('🎉 All Exercises Completed!', {
+            body: 'Outstanding work! Every planned exercise is finished. Tap to review your workout summary!',
+            tag: 'workout-all-done',
+            url: '/workout',
+            vibrate: [300, 100, 300, 100, 400],
+            soundType: 'fanfare',
+          });
+        }
+      }
 
       if (shouldTriggerTimer) {
         startRestTimer(restSeconds);
@@ -309,7 +426,7 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
 
       return { ...prev, exercises: updatedExercises, updatedAt: Date.now() };
     });
-  }, []);
+  }, [user.preferences, personalRecords, startRestTimer]);
 
   // FINISH WORKOUT
   const finishActiveWorkout = useCallback((): WorkoutSession | null => {

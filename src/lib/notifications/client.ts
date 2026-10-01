@@ -80,12 +80,118 @@ export function playGymChime(): void {
   }
 }
 
+/**
+ * Plays a subtle acoustic tick for 10-second warning
+ */
+export function playTickChime(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch {}
+}
+
+/**
+ * Plays a refreshing water droplet chime for hydration alerts
+ */
+export function playWaterChime(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    // Drop 1
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(700, now);
+    osc1.frequency.exponentialRampToValueAtTime(1400, now + 0.15);
+
+    gain1.gain.setValueAtTime(0.25, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.2);
+
+    // Drop 2 (harmonic splash)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1050, now + 0.1);
+    osc2.frequency.exponentialRampToValueAtTime(1800, now + 0.28);
+
+    gain2.gain.setValueAtTime(0.2, now + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.1);
+    osc2.stop(now + 0.35);
+  } catch {}
+}
+
+/**
+ * Plays a victory fanfare for Personal Record achievements
+ */
+export function playFanfareChime(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const startTime = now + idx * 0.12;
+      const duration = idx === notes.length - 1 ? 0.45 : 0.15;
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    });
+  } catch {}
+}
+
 export interface MobileNotificationOptions {
   body?: string;
   tag?: string;
   url?: string;
   vibrate?: number[];
   renotify?: boolean;
+  soundType?: 'chime' | 'tick' | 'water' | 'fanfare' | 'none';
 }
 
 /**
@@ -96,8 +202,11 @@ export async function sendMobileNotification(
   title: string,
   options: MobileNotificationOptions = {}
 ): Promise<boolean> {
-  // Always trigger sound & haptic vibration
-  playGymChime();
+  const soundType = options.soundType || 'chime';
+  if (soundType === 'chime') playGymChime();
+  else if (soundType === 'tick') playTickChime();
+  else if (soundType === 'water') playWaterChime();
+  else if (soundType === 'fanfare') playFanfareChime();
 
   if (typeof window !== 'undefined' && 'vibrate' in navigator) {
     try {

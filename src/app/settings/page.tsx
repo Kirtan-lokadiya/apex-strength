@@ -8,7 +8,11 @@ import {
   Check,
   Trash2,
   Bell,
-  Volume2
+  Volume2,
+  Droplets,
+  Trophy,
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 import { 
@@ -42,12 +46,29 @@ export function SettingsPage() {
     }
   };
 
-  const handleSendTestNotification = async () => {
-    await sendMobileNotification('🔔 Test Notification', {
-      body: 'Sound and vibration are working perfectly on your Android device!',
-      tag: 'test-alert',
-      vibrate: [300, 100, 300, 100, 300],
-    });
+  const handleSendTestNotification = async (type: 'chime' | 'water' | 'fanfare' = 'chime') => {
+    if (type === 'water') {
+      await sendMobileNotification('💧 Hydration Check (Test)', {
+        body: 'Take a sip of water! Staying hydrated prevents cramps and sustains peak strength.',
+        tag: 'test-hydration',
+        vibrate: [200, 150, 200],
+        soundType: 'water',
+      });
+    } else if (type === 'fanfare') {
+      await sendMobileNotification('🏆 NEW PERSONAL RECORD (Test)!', {
+        body: 'Barbell Bench Press: 100 kg × 5 reps (Est. 1RM: 112.5 kg)! Great lift!',
+        tag: 'test-pr',
+        vibrate: [300, 100, 300, 100, 500],
+        soundType: 'fanfare',
+      });
+    } else {
+      await sendMobileNotification('⏱️ Rest Complete (Test)', {
+        body: 'Rest interval finished! Sound & vibration are working on your Android device.',
+        tag: 'test-alert',
+        vibrate: [400, 150, 400],
+        soundType: 'chime',
+      });
+    }
   };
 
   const handleUnitChange = (unit: 'kg' | 'lb') => {
@@ -193,7 +214,7 @@ export function SettingsPage() {
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
             <h3 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm uppercase tracking-wider">
-              Android Push Notifications
+              Android Push & Gym-Floor Alerts
             </h3>
           </div>
           {notifPermission === 'granted' ? (
@@ -212,10 +233,11 @@ export function SettingsPage() {
         </div>
 
         <p className="text-xs text-zinc-500 leading-relaxed">
-          Receive native vibration and sound alerts for rest intervals when your screen is locked or while in Spotify/YouTube. 100% free and unlimited on Android.
+          Receive native vibration and sound alerts when your phone screen is locked or while streaming Spotify/YouTube. 100% free and unlimited on Android.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+        {/* Permission Request / Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 pb-2">
           {notifPermission !== 'granted' ? (
             <button
               onClick={handleEnableNotifications}
@@ -225,14 +247,142 @@ export function SettingsPage() {
               Enable Android Notifications
             </button>
           ) : (
-            <button
-              onClick={handleSendTestNotification}
-              className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-              Send Test Notification
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => handleSendTestNotification('chime')}
+                className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                title="Test Gym Bell Chime"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+                Test Rest Chime
+              </button>
+              <button
+                onClick={() => handleSendTestNotification('water')}
+                className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                title="Test Water Drop Reminder"
+              >
+                <Droplets className="w-3.5 h-3.5 text-blue-500" />
+                Test Hydration
+              </button>
+              <button
+                onClick={() => handleSendTestNotification('fanfare')}
+                className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                title="Test PR Fanfare"
+              >
+                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                Test PR Fanfare
+              </button>
+            </div>
           )}
+        </div>
+
+        {/* Granular Notification Preference Toggles */}
+        <div className="space-y-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+          {/* 1. Rest Timer Finished */}
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100 block">Rest Timer Complete</span>
+                <span className="text-zinc-500 text-[11px]">Chime & buzz when rest interval reaches 0:00</span>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={user.preferences.notifyRestTimerComplete ?? true}
+              onChange={(e) => handleToggle('notifyRestTimerComplete', e.target.checked)}
+              className="w-5 h-5 accent-zinc-900 dark:accent-zinc-100 rounded cursor-pointer"
+            />
+          </div>
+
+          {/* 2. 10-Second Ready-Up Warning */}
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+              <div>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100 block">10-Second Rest Warning</span>
+                <span className="text-zinc-500 text-[11px]">Subtle tick 10s before rest ends so you can chalk up</span>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={user.preferences.notifyRestTimerWarning ?? true}
+              onChange={(e) => handleToggle('notifyRestTimerWarning', e.target.checked)}
+              className="w-5 h-5 accent-zinc-900 dark:accent-zinc-100 rounded cursor-pointer"
+            />
+          </div>
+
+          {/* 3. Exercise Completed & Next Exercise Preview */}
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+              <div>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100 block">Exercise Completed & Next Preview</span>
+                <span className="text-zinc-500 text-[11px]">Announces finished exercise and previews the next planned movement</span>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={user.preferences.notifyExerciseComplete ?? true}
+              onChange={(e) => handleToggle('notifyExerciseComplete', e.target.checked)}
+              className="w-5 h-5 accent-zinc-900 dark:accent-zinc-100 rounded cursor-pointer"
+            />
+          </div>
+
+          {/* 4. Hydration Water Reminders */}
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Droplets className="w-4 h-4 text-blue-500 shrink-0" />
+                <div>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 block">Drinking Water Reminder</span>
+                  <span className="text-zinc-500 text-[11px]">Periodic hydration acoustic cue during active workouts</span>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={user.preferences.notifyHydration ?? true}
+                onChange={(e) => handleToggle('notifyHydration', e.target.checked)}
+                className="w-5 h-5 accent-zinc-900 dark:accent-zinc-100 rounded cursor-pointer"
+              />
+            </div>
+
+            {(user.preferences.notifyHydration ?? true) && (
+              <div className="flex items-center justify-between pt-1 text-[11px] text-zinc-600 dark:text-zinc-400">
+                <span>Remind me every:</span>
+                <select
+                  value={user.preferences.hydrationIntervalMinutes || 20}
+                  onChange={(e) => {
+                    updateUserPreferences({ hydrationIntervalMinutes: parseInt(e.target.value, 10) });
+                    triggerSuccess();
+                  }}
+                  className="bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2.5 py-1 font-bold text-zinc-800 dark:text-zinc-200"
+                >
+                  <option value={15}>15 minutes</option>
+                  <option value={20}>20 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* 5. Personal Record (PR) Trophy */}
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+              <div>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100 block">Personal Record (PR) Celebration</span>
+                <span className="text-zinc-500 text-[11px]">Victory fanfare chime and haptic pulse when hitting an all-time best lift</span>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={user.preferences.notifyPR ?? true}
+              onChange={(e) => handleToggle('notifyPR', e.target.checked)}
+              className="w-5 h-5 accent-zinc-900 dark:accent-zinc-100 rounded cursor-pointer"
+            />
+          </div>
         </div>
       </div>
 

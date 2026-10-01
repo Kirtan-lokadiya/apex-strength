@@ -29,6 +29,12 @@ export const DEMO_USER: UserProfile = {
     autoDetectMissedWorkouts: true,
     barbellWeightKg: 20,
     barbellWeightLb: 45,
+    notifyExerciseComplete: true,
+    notifyRestTimerComplete: true,
+    notifyRestTimerWarning: true,
+    notifyHydration: true,
+    hydrationIntervalMinutes: 20,
+    notifyPR: true,
   },
 };
 
