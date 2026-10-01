@@ -10,9 +10,11 @@ import {
   Dumbbell 
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
+import { WorkoutSession } from '@/lib/types';
 import { SetRow } from './SetRow';
 import { PlateCalculatorModal } from './PlateCalculatorModal';
 import { RestTimerBar } from './RestTimerBar';
+import { WorkoutSummaryModal } from './WorkoutSummaryModal';
 
 interface ActiveWorkoutViewProps {
   onFinish: () => void;
@@ -33,6 +35,7 @@ export function ActiveWorkoutView({ onFinish }: ActiveWorkoutViewProps) {
 
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [plateCalcWeight, setPlateCalcWeight] = useState<number | null>(null);
+  const [celebrationSession, setCelebrationSession] = useState<WorkoutSession | null>(null);
 
   useEffect(() => {
     if (!activeSession) return;
@@ -58,7 +61,7 @@ export function ActiveWorkoutView({ onFinish }: ActiveWorkoutViewProps) {
   const handleFinish = () => {
     const finished = finishActiveWorkout();
     if (finished) {
-      onFinish();
+      setCelebrationSession(finished);
     }
   };
 
@@ -217,6 +220,17 @@ export function ActiveWorkoutView({ onFinish }: ActiveWorkoutViewProps) {
           onClose={() => setPlateCalcWeight(null)}
           initialWeight={plateCalcWeight}
           unit={user.preferences.unit}
+        />
+      )}
+
+      {/* Post-Workout Celebration Modal */}
+      {celebrationSession && (
+        <WorkoutSummaryModal
+          session={celebrationSession}
+          onClose={() => {
+            setCelebrationSession(null);
+            onFinish();
+          }}
         />
       )}
     </div>

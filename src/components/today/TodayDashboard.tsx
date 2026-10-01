@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 import { MissedWorkoutBanner } from '@/components/calendar/MissedWorkoutBanner';
+import { MuscleRecoveryWidget } from '@/components/analytics/MuscleRecoveryWidget';
 import Link from 'next/link';
 
 export function TodayDashboard() {
@@ -315,7 +316,10 @@ export function TodayDashboard() {
         </div>
       </div>
 
-      {/* 4. UPCOMING SESSIONS WITH THUMBNAILS */}
+      {/* 4. BIOLOGICAL MUSCLE RECOVERY & READINESS */}
+      <MuscleRecoveryWidget />
+
+      {/* 5. UPCOMING SESSIONS WITH THUMBNAILS */}
       {upcomingWorkouts.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
