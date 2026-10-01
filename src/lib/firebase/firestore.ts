@@ -83,9 +83,12 @@ export async function getExercises(userId?: string): Promise<Exercise[]> {
     }
   }
 
-  // Merge default exercises with custom
+  // Merge default exercises with custom / modified exercises
   const allCustom = [...localCustom, ...firestoreCustom.filter(fc => !localCustom.some(lc => lc.id === fc.id))];
-  return [...DEFAULT_EXERCISES, ...allCustom];
+  const customMap = new Map(allCustom.map(e => [e.id, e]));
+  const mergedDefaults = DEFAULT_EXERCISES.map(e => customMap.get(e.id) || e);
+  const brandNewCustom = allCustom.filter(e => !DEFAULT_EXERCISES.some(d => d.id === e.id));
+  return [...mergedDefaults, ...brandNewCustom];
 }
 
 export async function saveCustomExercise(exercise: Exercise): Promise<void> {

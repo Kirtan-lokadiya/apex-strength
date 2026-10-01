@@ -54,6 +54,7 @@ interface WorkoutStoreContextType {
   
   // Custom Exercises & Settings
   addCustomExercise: (exercise: Exercise) => Promise<void>;
+  updateExercise: (exercise: Exercise) => Promise<void>;
   updateUserPreferences: (prefs: Partial<UserProfile['preferences']>) => void;
   resetToDemoSeed: () => void;
   exportUserData: (format: 'json' | 'csv') => void;
@@ -523,6 +524,12 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
     await saveCustomExercise(exercise);
   };
 
+  const updateExercise = async (exercise: Exercise) => {
+    const updatedWithTimestamp = { ...exercise, updatedAt: Date.now() };
+    setExercises(prev => prev.map(e => e.id === exercise.id ? updatedWithTimestamp : e));
+    await saveCustomExercise(updatedWithTimestamp);
+  };
+
   const updateUserPreferences = (prefs: Partial<UserProfile['preferences']>) => {
     setUser(prev => ({
       ...prev,
@@ -613,6 +620,7 @@ export function WorkoutStoreProvider({ children }: { children: React.ReactNode }
         deleteCustomExercise,
         clearAllData,
         addCustomExercise,
+        updateExercise,
         updateUserPreferences,
         resetToDemoSeed,
         exportUserData,

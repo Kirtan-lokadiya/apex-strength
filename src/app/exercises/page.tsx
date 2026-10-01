@@ -7,25 +7,47 @@ import {
   X, 
   Check, 
   Loader2,
-  Trash2
+  Trash2,
+  Edit3,
+  Image as ImageIcon,
+  Sparkles
 } from 'lucide-react';
 import { useWorkoutStore } from '@/hooks/useWorkoutStore';
 import { Exercise, MuscleGroup, EquipmentType } from '@/lib/types';
 import { uploadImageToImgBB } from '@/lib/imgbb/client';
 
+const CURATED_PRESETS: { label: string; muscle: MuscleGroup; url: string }[] = [
+  { label: 'Barbell Bench Press', muscle: 'Chest', url: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Dumbbell Incline Press', muscle: 'Chest', url: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Deadlift / Pull', muscle: 'Back', url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Barbell Row / Lat Pull', muscle: 'Back', url: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Barbell Back Squat', muscle: 'Quads', url: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Leg Press / Lunge', muscle: 'Quads', url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Overhead Shoulder Press', muscle: 'Shoulders', url: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Dumbbell Lateral Raise', muscle: 'Shoulders', url: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Biceps Cable / DB Curl', muscle: 'Biceps', url: 'https://images.unsplash.com/photo-1581009137042-c552e485697a?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Tricep Pushdown / Dip', muscle: 'Triceps', url: 'https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Abs Core / Plank', muscle: 'Abs', url: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&auto=format&fit=crop&q=80' },
+  { label: 'Calf Raise / Jump', muscle: 'Calves', url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80' },
+];
+
 export default function ExercisesPage() {
-  const { exercises, addCustomExercise, deleteCustomExercise } = useWorkoutStore();
+  const { exercises, addCustomExercise, updateExercise, deleteCustomExercise } = useWorkoutStore();
   const [search, setSearch] = useState<string>('');
   const [selectedMuscle, setSelectedMuscle] = useState<string>('All');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [showAddModal, setShowAddModal] = useState<boolean>(false);
 
-  const [newExName, setNewExName] = useState('');
-  const [newExMuscle, setNewExMuscle] = useState<MuscleGroup>('Chest');
-  const [newExEquipment, setNewExEquipment] = useState<EquipmentType>('Barbell');
-  const [newExInstructions, setNewExInstructions] = useState('');
+  // Form modal state (for both creating and editing)
+  const [formModalOpen, setFormModalOpen] = useState<boolean>(false);
+  const [editingTarget, setEditingTarget] = useState<Exercise | null>(null);
+
+  // Form inputs
+  const [formName, setFormName] = useState('');
+  const [formMuscle, setFormMuscle] = useState<MuscleGroup>('Chest');
+  const [formEquipment, setFormEquipment] = useState<EquipmentType>('Barbell');
+  const [formInstructions, setFormInstructions] = useState('');
+  const [formImageUrl, setFormImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [newExImageUrl, setNewExImageUrl] = useState('');
 
   const muscles: string[] = ['All', 'Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings', 'Biceps', 'Triceps', 'Abs', 'Calves'];
 
@@ -35,6 +57,26 @@ export default function ExercisesPage() {
     return matchesSearch && matchesMuscle;
   });
 
+  const openCreateModal = () => {
+    setEditingTarget(null);
+    setFormName('');
+    setFormMuscle('Chest');
+    setFormEquipment('Barbell');
+    setFormInstructions('');
+    setFormImageUrl(CURATED_PRESETS[0].url);
+    setFormModalOpen(true);
+  };
+
+  const openEditModal = (exercise: Exercise) => {
+    setEditingTarget(exercise);
+    setFormName(exercise.name);
+    setFormMuscle(exercise.primaryMuscle);
+    setFormEquipment(exercise.equipment);
+    setFormInstructions(exercise.instructions || '');
+    setFormImageUrl(exercise.imageUrl || CURATED_PRESETS[0].url);
+    setFormModalOpen(true);
+  };
+
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -42,38 +84,53 @@ export default function ExercisesPage() {
     setUploadingImage(true);
     const result = await uploadImageToImgBB(file);
     if (result.success && result.url) {
-      setNewExImageUrl(result.url);
+      setFormImageUrl(result.url);
     } else {
       alert('Failed to upload image: ' + (result.error || 'Unknown error'));
     }
     setUploadingImage(false);
   };
 
-  const handleCreateExercise = async (e: React.FormEvent) => {
+  const handleSaveExercise = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExName.trim()) return;
+    if (!formName.trim()) return;
 
-    const newEx: Exercise = {
-      id: `custom-${Date.now()}`,
-      name: newExName.trim(),
-      primaryMuscle: newExMuscle,
-      secondaryMuscles: [],
-      equipment: newExEquipment,
-      movementPattern: 'Isolation',
-      supportedProgression: 'double_progression',
-      defaultRestSeconds: 90,
-      instructions: newExInstructions.trim(),
-      imageUrl: newExImageUrl || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&auto=format&fit=crop&q=80',
-      isCustom: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+    if (editingTarget) {
+      // Update existing movement
+      const updated: Exercise = {
+        ...editingTarget,
+        name: formName.trim(),
+        primaryMuscle: formMuscle,
+        equipment: formEquipment,
+        instructions: formInstructions.trim(),
+        imageUrl: formImageUrl.trim() || editingTarget.imageUrl,
+        updatedAt: Date.now(),
+      };
+      await updateExercise(updated);
+      if (selectedExercise?.id === updated.id) {
+        setSelectedExercise(updated);
+      }
+    } else {
+      // Create brand new custom movement
+      const newEx: Exercise = {
+        id: `custom-${Date.now()}`,
+        name: formName.trim(),
+        primaryMuscle: formMuscle,
+        secondaryMuscles: [],
+        equipment: formEquipment,
+        movementPattern: 'Isolation',
+        supportedProgression: 'double_progression',
+        defaultRestSeconds: 90,
+        instructions: formInstructions.trim(),
+        imageUrl: formImageUrl.trim() || CURATED_PRESETS[0].url,
+        isCustom: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      await addCustomExercise(newEx);
+    }
 
-    await addCustomExercise(newEx);
-    setShowAddModal(false);
-    setNewExName('');
-    setNewExInstructions('');
-    setNewExImageUrl('');
+    setFormModalOpen(false);
   };
 
   return (
@@ -85,16 +142,16 @@ export default function ExercisesPage() {
             Exercise Library
           </h2>
           <p className="text-xs text-zinc-500">
-            {exercises.length} compound and isolation movements with form guides
+            {exercises.length} compound and isolation movements • Create, edit & customize photos
           </p>
         </div>
 
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={openCreateModal}
           className="px-4 py-2.5 bg-zinc-950 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold rounded-2xl text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-xs"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
-          Custom Exercise
+          Create Exercise
         </button>
       </div>
 
@@ -128,10 +185,10 @@ export default function ExercisesPage() {
         </div>
       </div>
 
-      {/* Exercise List WITH ACTUAL PHOTOGRAPHS */}
+      {/* Exercise List WITH ACTUAL PHOTOGRAPHS & EDIT BUTTONS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {filteredExercises.map((exercise) => {
-          const photo = exercise.imageUrl || 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&auto=format&fit=crop&q=80';
+          const photo = exercise.imageUrl || CURATED_PRESETS[0].url;
 
           return (
             <div
@@ -154,11 +211,23 @@ export default function ExercisesPage() {
                   <h4 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-sm truncate">
                     {exercise.name}
                   </h4>
-                  {exercise.isCustom && (
-                    <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
+                    {exercise.isCustom && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
                         Custom
                       </span>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(exercise);
+                      }}
+                      className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      title="Edit Exercise / Photo"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    {exercise.isCustom && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -171,8 +240,8 @@ export default function ExercisesPage() {
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-1">
                   <span className="font-semibold text-zinc-700 dark:text-zinc-300">{exercise.primaryMuscle}</span>
@@ -231,6 +300,15 @@ export default function ExercisesPage() {
             )}
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openEditModal(selectedExercise)}
+                className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-colors border border-zinc-200 dark:border-zinc-700"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit
+              </button>
+
               {selectedExercise.isCustom && (
                 <button
                   type="button"
@@ -246,6 +324,7 @@ export default function ExercisesPage() {
                   Delete
                 </button>
               )}
+
               <button
                 onClick={() => setSelectedExercise(null)}
                 className="flex-1 py-3 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold rounded-2xl text-xs transition-colors"
@@ -257,46 +336,51 @@ export default function ExercisesPage() {
         </div>
       )}
 
-      {/* Add Custom Exercise Modal with ImgBB integration */}
-      {showAddModal && (
+      {/* Unified Exercise Create & Edit Modal */}
+      {formModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
           <form
-            onSubmit={handleCreateExercise}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4"
+            onSubmit={handleSaveExercise}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-base">
-                Create Custom Exercise
-              </h3>
+              <div className="flex items-center gap-2">
+                {editingTarget ? <Edit3 className="w-5 h-5 text-zinc-900 dark:text-zinc-100" /> : <Plus className="w-5 h-5 text-zinc-900 dark:text-zinc-100" />}
+                <h3 className="font-extrabold text-zinc-900 dark:text-zinc-100 text-base">
+                  {editingTarget ? `Edit ${editingTarget.name}` : 'Create New Exercise'}
+                </h3>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => setFormModalOpen(false)}
                 className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
+              {/* Name */}
               <div>
                 <label className="text-zinc-700 dark:text-zinc-300 font-semibold block mb-1">Exercise Name *</label>
                 <input
                   type="text"
                   required
-                  value={newExName}
-                  onChange={(e) => setNewExName(e.target.value)}
-                  placeholder="e.g. Bulgarian Split Squat"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="e.g. Incline Dumbbell Press"
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              {/* Muscle & Equipment */}
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="text-zinc-700 dark:text-zinc-300 font-semibold block mb-1">Primary Muscle</label>
                   <select
-                    value={newExMuscle}
-                    onChange={(e) => setNewExMuscle(e.target.value as MuscleGroup)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-zinc-900 dark:text-zinc-100"
+                    value={formMuscle}
+                    onChange={(e) => setFormMuscle(e.target.value as MuscleGroup)}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-zinc-900 dark:text-zinc-100 font-medium"
                   >
                     {muscles.filter(m => m !== 'All').map(m => (
                       <option key={m} value={m}>{m}</option>
@@ -307,9 +391,9 @@ export default function ExercisesPage() {
                 <div>
                   <label className="text-zinc-700 dark:text-zinc-300 font-semibold block mb-1">Equipment</label>
                   <select
-                    value={newExEquipment}
-                    onChange={(e) => setNewExEquipment(e.target.value as EquipmentType)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-zinc-900 dark:text-zinc-100"
+                    value={formEquipment}
+                    onChange={(e) => setFormEquipment(e.target.value as EquipmentType)}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-2.5 py-2 text-zinc-900 dark:text-zinc-100 font-medium"
                   >
                     {['Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight', 'Kettlebell'].map(eq => (
                       <option key={eq} value={eq}>{eq}</option>
@@ -318,49 +402,122 @@ export default function ExercisesPage() {
                 </div>
               </div>
 
+              {/* Instructions */}
               <div>
-                <label className="text-zinc-700 dark:text-zinc-300 font-semibold block mb-1">Form Instructions</label>
+                <label className="text-zinc-700 dark:text-zinc-300 font-semibold block mb-1">Form Instructions & Cues</label>
                 <textarea
                   rows={2}
-                  value={newExInstructions}
-                  onChange={(e) => setNewExInstructions(e.target.value)}
-                  placeholder="Form tips, cueing, setup..."
+                  value={formInstructions}
+                  onChange={(e) => setFormInstructions(e.target.value)}
+                  placeholder="Setup, stance, breathing cues, range of motion..."
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100"
                 />
               </div>
 
-              {/* ImgBB Image Upload */}
-              <div>
-                <label className="text-zinc-700 dark:text-zinc-300 font-semibold block mb-1">Photo (via ImgBB Free Hosting)</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileChange}
-                    className="text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-900 dark:file:text-zinc-100 hover:file:bg-zinc-200"
-                  />
-                  {uploadingImage && <Loader2 className="w-4 h-4 text-zinc-600 animate-spin" />}
-                </div>
-                {newExImageUrl && (
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block mt-1">Image uploaded successfully!</span>
+              {/* Photo Management Section */}
+              <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <span className="font-extrabold uppercase text-zinc-500 tracking-wider block text-[11px] flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
+                  Exercise Photography
+                </span>
+
+                {/* Live Preview */}
+                {formImageUrl && (
+                  <div className="relative h-32 w-full rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={formImageUrl}
+                      alt="Exercise Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute bottom-2 right-2 text-[10px] bg-black/60 backdrop-blur-xs text-white px-2 py-0.5 rounded-md font-mono">
+                      Live Preview
+                    </span>
+                  </div>
                 )}
+
+                {/* Direct Image URL input */}
+                <div>
+                  <label className="text-zinc-600 dark:text-zinc-400 block mb-1">Image URL (Unsplash, CDN or Imgur)</label>
+                  <input
+                    type="url"
+                    value={formImageUrl}
+                    onChange={(e) => setFormImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100"
+                  />
+                </div>
+
+                {/* 1-Tap Curated Fitness Presets */}
+                <div>
+                  <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 block mb-1.5 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    Or Select from Curated Fitness Photos:
+                  </span>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {CURATED_PRESETS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setFormImageUrl(preset.url);
+                          if (!editingTarget && formName === '') {
+                            setFormName(preset.label);
+                            setFormMuscle(preset.muscle);
+                          }
+                        }}
+                        className={`group relative rounded-xl overflow-hidden border p-1 text-left transition-all ${
+                          formImageUrl === preset.url
+                            ? 'border-zinc-900 dark:border-zinc-100 ring-2 ring-zinc-900 dark:ring-zinc-100'
+                            : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
+                        }`}
+                      >
+                        <div className="h-14 w-full rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-800">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={preset.url}
+                            alt={preset.label}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 truncate block mt-1">
+                          {preset.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* File Upload via ImgBB */}
+                <div className="pt-2">
+                  <label className="text-zinc-600 dark:text-zinc-400 block mb-1">Or Upload Custom Photo from Device</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      className="text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-900 dark:file:text-zinc-100 hover:file:bg-zinc-200 cursor-pointer"
+                    />
+                    {uploadingImage && <Loader2 className="w-4 h-4 text-zinc-600 animate-spin" />}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               <button
                 type="button"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => setFormModalOpen(false)}
                 className="flex-1 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold rounded-xl text-xs"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs"
+                className="flex-1 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
-                Save Exercise
+                {editingTarget ? 'Save Changes' : 'Create Exercise'}
               </button>
             </div>
           </form>
